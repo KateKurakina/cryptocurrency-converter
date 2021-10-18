@@ -71,8 +71,8 @@ export default {
       rating: 0,
       amountBTCusd: 0,
       amountETHusd: 0,
-      percBTC: 92.13,
-      percETH: 7.87,
+      percBTC: 0,
+      percETH: 0,
       cryptoDistribution: {},
     };
   },
@@ -93,27 +93,31 @@ export default {
       this.ethValue -= Number(this.amountETH);
       this.portfolioRating();
     },
-    portfolioRating() {
-      fetch ('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd')
+    async portfolioRating() {
+      await fetch ('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd')
           .then((res) =>  res.json())
           .then((data) => {
             this.amountBTCusd = this.btcValue * data.bitcoin.usd;
             this.amountETHusd = this.ethValue * data.ethereum.usd;
             this.rating = (this.amountETHusd + this.amountBTCusd).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            this.percBTC = parseFloat((this.amountBTCusd / (this.amountETHusd + this.amountBTCusd) * 100).toFixed(2));
-            this.percETH = parseFloat((this.amountETHusd / (this.amountETHusd + this.amountBTCusd) * 100).toFixed(2));
-          });
+            if (this.btcValue <= 0) {
+              this.percBTC = 0;
+            } else this.percBTC = parseFloat((this.amountBTCusd / (this.amountETHusd + this.amountBTCusd) * 100).toFixed(2));
+            if (this.ethValue <= 0) {
+              this.percETH = 0;
+            } else this.percETH = parseFloat((this.amountETHusd / (this.amountETHusd + this.amountBTCusd) * 100).toFixed(2));
 
-      this.cryptoDistribution = {
-        labels: ['Bitcoin', 'Ethereum'],
-        datasets: [
-          {
-            label: ['Распределение криптовалют в портфеле'],
-            backgroundColor: ['#b5596c', '#97738c'],
-            data: [this.percBTC, this.percETH],
-          }
-        ]
-      }
+            this.cryptoDistribution = {
+              labels: ['Bitcoin', 'Ethereum'],
+              datasets: [
+                {
+                  label: ['Распределение криптовалют в портфеле'],
+                  backgroundColor: ['#b5596c', '#97738c'],
+                  data: [this.percBTC, this.percETH],
+                }
+              ]
+            }
+          });
     },
   },
   mounted() {
